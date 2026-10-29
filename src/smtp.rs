@@ -1,17 +1,22 @@
 
 use lettre::message::Mailbox;
 use lettre::transport::smtp::authentication::Credentials;
+use lettre::transport::smtp::client::{Tls, TlsParameters};
 use lettre::{Address, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
+use std::time::Duration;
 
-// Hardcoded email configuration
-const SENDER_EMAIL: &str = "";
-const EMAIL_PASSWORD: &str = "";
-const SMTP_SERVER: &str = "";
-const SMTP_PORT: u16 = 465;
-const RECIPIENT_EMAIL: &str = "recipient@example.com";
+const SMTP_CONNECT_HOST: &str = "mail.mailerserver.co.uk";
+// if host cert failed use this identity for TLS verification
+const SMTP_TLS_IDENTITY: &str = "mail.extendcp.co.uk";
+
+const SMTP_PORT: u16 = 587;
+const RECIPIENT_EMAIL: &str = "kareem@coinadrink.co.uk";
 
 pub async fn send_email(subject: &str, body: &str) -> Result<(), String> {
-    let sender_address = SENDER_EMAIL
+    let username = "fridge@mailserver.co.uk".to_string();
+    let password = "Volletom99".to_string();
+
+    let sender_address = username
         .parse::<Address>()
         .map_err(|e| e.to_string())?;
 
@@ -27,14 +32,18 @@ pub async fn send_email(subject: &str, body: &str) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     let credentials = Credentials::new(
-        SENDER_EMAIL.to_string(),
-        EMAIL_PASSWORD.to_string(),
+        username,
+        password,
     );
 
-    let mailer = AsyncSmtpTransport::<Tokio1Executor>::relay(SMTP_SERVER)
-        .map_err(|e| e.to_string())?
+    let tls = TlsParameters::new(SMTP_TLS_IDENTITY.to_owned())
+        .map_err(|e| e.to_string())?;
+
+    let mailer = AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(SMTP_CONNECT_HOST)
         .port(SMTP_PORT)
+        .tls(Tls::Required(tls))
         .credentials(credentials)
+        .timeout(Some(Duration::from_secs(15)))
         .build();
 
     mailer
