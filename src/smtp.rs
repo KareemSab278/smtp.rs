@@ -1,4 +1,3 @@
-
 use lettre::message::Mailbox;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::transport::smtp::client::{Tls, TlsParameters};
@@ -7,11 +6,9 @@ use std::time::Duration;
 
 const RECIPIENT_EMAIL: &str = "kareem@coinadrink.co.uk";
 
-
-
 /*
     must be in ur .env file:
-    
+
     SMTP_CONNECT_HOST
     SMTP_TLS_IDENTITY
     SMTP_PORT
@@ -24,6 +21,8 @@ const RECIPIENT_EMAIL: &str = "kareem@coinadrink.co.uk";
     MAIL_FROM
     MAIL_FROM_NAME
 */
+
+#[allow(dead_code)]
 struct Config {
     smtp_connect_host: String,
     smtp_tls_identity: String,
@@ -38,19 +37,25 @@ struct Config {
     mail_from_name: String,
 }
 
+fn required_env(name: &str) -> Result<String, String> {
+    std::env::var(name).map_err(|error| format!("{name}: {error}"))
+}
+
 fn get_env_vars() -> Result<Config, String> {
     // gets env variables and constructs a Config struct
-    let smtp_connect_host = std::env::var("SMTP_CONNECT_HOST").map_err(|e| e.to_string())?;
-    let smtp_tls_identity = std::env::var("SMTP_TLS_IDENTITY").map_err(|e| e.to_string())?;
-    let smtp_port = std::env::var("SMTP_PORT").map_err(|e| e.to_string())?.parse::<u16>().map_err(|e| e.to_string())?;
-    let smtp_security = std::env::var("SMTP_SECURITY").map_err(|e| e.to_string())?;
-    let smtp_tls_mode = std::env::var("SMTP_TLS_MODE").map_err(|e| e.to_string())?;
-    let smtp_tls_name = std::env::var("SMTP_TLS_NAME").map_err(|e| e.to_string())?;
-    let smtp_auth_method = std::env::var("SMTP_AUTH_METHOD").map_err(|e| e.to_string())?;
-    let smtp_username = std::env::var("SMTP_USERNAME").map_err(|e| e.to_string())?;
-    let smtp_password = std::env::var("SMTP_PASSWORD").map_err(|e| e.to_string())?;
-    let mail_from = std::env::var("MAIL_FROM").map_err(|e| e.to_string())?;
-    let mail_from_name = std::env::var("MAIL_FROM_NAME").map_err(|e| e.to_string())?;
+    let smtp_connect_host = required_env("SMTP_CONNECT_HOST")?;
+    let smtp_tls_identity = required_env("SMTP_TLS_IDENTITY")?;
+    let smtp_port = required_env("SMTP_PORT")?
+        .parse::<u16>()
+        .map_err(|error| format!("SMTP_PORT: {error}"))?;
+    let smtp_security = required_env("SMTP_SECURITY")?;
+    let smtp_tls_mode = required_env("SMTP_TLS_MODE")?;
+    let smtp_tls_name = required_env("SMTP_TLS_NAME")?;
+    let smtp_auth_method = required_env("SMTP_AUTH_METHOD")?;
+    let smtp_username = required_env("SMTP_USERNAME")?;
+    let smtp_password = required_env("SMTP_PASSWORD")?;
+    let mail_from = required_env("MAIL_FROM")?;
+    let mail_from_name = required_env("MAIL_FROM_NAME")?;
 
     Ok(Config {
         smtp_connect_host,
@@ -66,7 +71,6 @@ fn get_env_vars() -> Result<Config, String> {
         mail_from_name,
     })
 }
-
 
 pub async fn send_email(subject: &str, body: &str) -> Result<(), String> {
     let config = get_env_vars()?;
