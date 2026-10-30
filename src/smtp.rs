@@ -95,14 +95,24 @@ pub async fn send_email(subject: &str, body: &str) -> Result<(), String> {
     let username = config.smtp_username;
     let password = config.smtp_password;
 
-    let sender_address = username.parse::<Address>().map_err(|e| e.to_string())?;
+    let sender_address = config
+        .mail_from
+        .parse::<Address>()
+        .or_else(|_| username.parse::<Address>())
+        .map_err(|e| e.to_string())?;
+
+    let sender_name = if config.mail_from_name.is_empty() {
+        None
+    } else {
+        Some(config.mail_from_name.to_string())
+    };
 
     let recipient_address = RECIPIENT_EMAIL
         .parse::<Address>()
         .map_err(|e| e.to_string())?;
 
     let email = Message::builder()
-        .from(Mailbox::new(None, sender_address))
+        .from(Mailbox::new(sender_name, sender_address))
         .to(Mailbox::new(None, recipient_address))
         .subject(subject)
         .body(body.to_string())
@@ -117,6 +127,7 @@ pub async fn send_email(subject: &str, body: &str) -> Result<(), String> {
         .port(config.smtp_port)
         .tls(Tls::Required(tls))
         .credentials(credentials)
+        .authentication(vec![Mechanism::Login, Mechanism::Plain])
         .timeout(Some(Duration::from_secs(15)))
         .build();
 
