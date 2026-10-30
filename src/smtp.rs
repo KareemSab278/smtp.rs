@@ -13,9 +13,11 @@
     MAIL_FROM_NAME - should be set to your sender name, e.g., test_sender
 */
 
+// direct to mx direct_2mx
+
 
 use lettre::message::Mailbox;
-use lettre::transport::smtp::authentication::Credentials;
+use lettre::transport::smtp::authentication::{Credentials, Mechanism};
 use lettre::transport::smtp::client::{Tls, TlsParameters};
 use lettre::{Address, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 use std::time::Duration;
